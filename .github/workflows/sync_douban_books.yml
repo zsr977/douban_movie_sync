@@ -4,11 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       douban_urls:
-        description: "多个豆瓣电影链接，换行分隔，每行一个链接"
+        description: "多个豆瓣电影链接，逗号分隔"
         required: true
-        default: |
-          https://movie.douban.com/subject/1292052/
-          https://movie.douban.com/subject/1293172/
+        default: "https://movie.douban.com/subject/1292052/,https://movie.douban.com/subject/1293172/"
 
 jobs:
   sync:
@@ -31,12 +29,14 @@ jobs:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
         run: |
-          echo "===== 原始输入（可见换行）====="
-          echo "${{ github.event.inputs.douban_urls }}" | od -c
+          echo "===== 原始输入 ====="
+          echo "${{ github.event.inputs.douban_urls }}"
 
-          printf "%s\n" "${{ github.event.inputs.douban_urls }}" | tr -d '\r' > urls.txt
-
+          echo "${{ github.event.inputs.douban_urls }}" | tr -d '\r' > urls.txt
           echo "===== 写入的 urls.txt 内容 ====="
+          cat urls.txt
+
+          python fetch_douban_movie.py urls.txt
           cat urls.txt
 
           python fetch_douban_movie.py urls.txt
