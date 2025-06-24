@@ -7,8 +7,8 @@ on:
         description: "多个豆瓣电影链接，换行分隔"
         required: true
         default: |
-          https://movie.douban.com/subject/3287562/
-          https://movie.douban.com/subject/1849031/
+          https://movie.douban.com/subject/1292052/
+          https://movie.douban.com/subject/1293172/
 
 jobs:
   sync:
