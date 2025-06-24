@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       douban_urls:
-        description: "多个豆瓣电影链接，换行分隔"
+        description: "多个豆瓣电影链接，换行分隔，每行一个链接"
         required: true
         default: |
           https://movie.douban.com/subject/1292052/
@@ -15,23 +15,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
-      - name: Run sync script
+      - name: Write input URLs to file and run sync
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
         run: |
+          echo "===== 原始输入（可见换行）====="
+          echo "${{ github.event.inputs.douban_urls }}" | od -c
+
           printf "%s\n" "${{ github.event.inputs.douban_urls }}" | tr -d '\r' > urls.txt
+
+          echo "===== 写入的 urls.txt 内容 ====="
           cat urls.txt
+
           python fetch_douban_movie.py urls.txt
