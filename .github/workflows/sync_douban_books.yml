@@ -1,0 +1,36 @@
+name: Sync Douban Movies to Notion
+
+on:
+  workflow_dispatch:
+    inputs:
+      douban_urls:
+        description: "多个豆瓣电影链接，换行分隔"
+        required: true
+        default: |
+          https://movie.douban.com/subject/3287562/
+          https://movie.douban.com/subject/1849031/
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run sync script
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        run: |
+          echo "${{ github.event.inputs.douban_urls }}" > urls.txt
+          python movie_sync.py urls.txt
