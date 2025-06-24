@@ -120,6 +120,7 @@ def find_page_by_url(url):
     return results[0]["id"] if results else None
 
 def sync_to_notion(movie):
+    print(f"同步电影：{movie['title']} - {movie['url']}")
     page_id = find_page_by_url(movie["url"])
     props = notion_props(movie)
     cover = {"external": {"url": movie["cover"]}}
@@ -135,12 +136,20 @@ def sync_to_notion(movie):
             icon=icon
         )
         print(f"✅ 已添加《{movie['title']}》")
-
+def split_urls(line):
+    # 用逗号分割，去除空白
+    return [u.strip() for u in line.split(",") if u.strip()]
 if __name__ == "__main__":
     url_file = sys.argv[1] if len(sys.argv) > 1 else "urls.txt"
-    with open(url_file, "r") as f:
-        urls = [line.strip() for line in f if line.strip()]
+    with open(url_file, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    urls = split_urls(content)
+
     for url in urls:
+        if not url.startswith("https://movie.douban.com/subject/"):
+            print(f"⚠️ 跳过非法链接: {url}")
+            continue
         try:
             movie = fetch_douban_movie(url)
             sync_to_notion(movie)
