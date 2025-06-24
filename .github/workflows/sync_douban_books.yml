@@ -33,4 +33,5 @@ jobs:
           DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
         run: |
           echo "${{ github.event.inputs.douban_urls }}" | tr -d '\r' > urls.txt
-          python fetch_douban_movie.py urls.txt
+          cat urls.txt
+          python movie_sync.py urls.txt
