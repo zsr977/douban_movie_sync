@@ -1,16 +1,18 @@
+# movie_sync.py
 import requests
 from bs4 import BeautifulSoup
 from notion_client import Client
 import re
+import os
+import sys
 from datetime import datetime
 
 # === 配置 ===
-NOTION_TOKEN = "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"
-DATABASE_ID = "1c9b7f6b184c80dba7dfed77e9cd4103"
+NOTION_TOKEN = os.environ.get("NOTION_TOKEN")
+DATABASE_ID = os.environ.get("DATABASE_ID")
 
 notion = Client(auth=NOTION_TOKEN)
 headers = {"User-Agent": "Mozilla/5.0"}
-
 
 def split_multi(text):
     if not text:
@@ -46,7 +48,6 @@ def fetch_douban_movie(url):
                 return [a.text.strip() for a in attrs_span[0].find_all("a")]
         return []
 
-    # 兼容多个上映日期，仅取第一个带年份的
     release_dates = soup.find_all("span", property="v:initialReleaseDate")
     release_date = ""
     for tag in release_dates:
@@ -73,7 +74,6 @@ def fetch_douban_movie(url):
 
     return movie
 
-
 def notion_props(movie):
     def multi_select(items):
         return {"multi_select": [{"name": i} for i in items if i]}
@@ -82,7 +82,6 @@ def notion_props(movie):
         return {"rich_text": [{"text": {"content": text}}]} if text else {"rich_text": []}
 
     def date(val):
-        # 尝试匹配 YYYY-MM-DD、YYYY-MM 或 YYYY
         for fmt in ("%Y-%m-%d", "%Y-%m", "%Y"):
             try:
                 dt = datetime.strptime(val[:10], fmt)
@@ -109,7 +108,6 @@ def notion_props(movie):
         },
     }
 
-
 def find_page_by_url(url):
     response = notion.databases.query(
         database_id=DATABASE_ID,
@@ -120,7 +118,6 @@ def find_page_by_url(url):
     )
     results = response.get("results", [])
     return results[0]["id"] if results else None
-
 
 def sync_to_notion(movie):
     page_id = find_page_by_url(movie["url"])
@@ -139,15 +136,10 @@ def sync_to_notion(movie):
         )
         print(f"✅ 已添加《{movie['title']}》")
 
-
 if __name__ == "__main__":
-    # 可批量处理多个链接
-    urls = [
-        "https://movie.douban.com/subject/1306029/",
-        "https://movie.douban.com/subject/2161696/",
-        "https://movie.douban.com/subject/1292000/"
-        # 你可以添加更多链接
-    ]
+    url_file = sys.argv[1] if len(sys.argv) > 1 else "urls.txt"
+    with open(url_file, "r") as f:
+        urls = [line.strip() for line in f if line.strip()]
     for url in urls:
         try:
             movie = fetch_douban_movie(url)
