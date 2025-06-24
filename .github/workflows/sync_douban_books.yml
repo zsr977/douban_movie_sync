@@ -34,4 +34,4 @@ jobs:
         run: |
           echo "${{ github.event.inputs.douban_urls }}" | tr -d '\r' > urls.txt
           cat urls.txt
-          python movie_sync.py urls.txt
+          python fetch_douban_movie.py urls.txt
